@@ -1,0 +1,22 @@
+{
+  "name": "markov-chain-bot",
+  "version": "1.0.0",
+  "description": "A Slack bot that generates Markov chains based on a user's public post history.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tgrowden/MarkovChainBot.git"
+  },
+  "author": "Taylor Growden",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tgrowden/MarkovChainBot/issues"
+  },
+  "homepage": "https://github.com/tgrowden/MarkovChainBot#readme",
+  "devDependencies": {
+    "eslint": "^3.15.0"
+  }
+}
