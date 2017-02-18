@@ -76,10 +76,29 @@ class Bot {
             let queryParams = self.getMsgTag(msg)
             if (queryParams) {
                 self.generate(queryParams)
-            } else if (queryParams === false) {
+            } else if (queryParams === false && self.warrentsSave(msg)) {
                 self.saveMessage(msg)
             }
         })
+    }
+
+
+    /**
+     * Determines if a message warrents saving
+     *
+     * @todo look into message subtypes. as-is, this may not be sufficient
+     * @param {Object} msg
+     * @returns {Boolean} save the message
+     * 
+     * @memberOf Bot
+     */
+    warrentsSave(msg) {
+        let res = true
+        if (msg.subtype && msg.subtype == 'file_share') {
+            res = false
+        }
+
+        return res
     }
 
     /**
