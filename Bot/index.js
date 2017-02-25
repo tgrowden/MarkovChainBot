@@ -196,7 +196,7 @@ class Bot {
         let msgArray = msg.text.split(' ')
         let res = false
 
-        if (msgArray[0] == `<@${this.id}>` && msgArray[1]) {
+        if (this._isCalled(msg)) {
             if (msgArray[1] == 'me') {
                 res = {
                     user: msg.user,
@@ -218,6 +218,29 @@ class Bot {
         }
 
         return res
+    }
+
+    /**
+     * Checks a message to see if the bot is being explicitly called via a tag
+     * 
+     * @param {Object|Array} msg The message object, or an array of the message text
+     * @returns {Boolean} Whether or not the bot was called
+     * 
+     * @memberOf Bot
+     */
+    _isCalled(msg) {
+        let msgArr
+        if (msg instanceof Object) {
+            msgArr = msg.text.split(' ')
+        } else if (msg instanceof Array) {
+            msgArr = msg
+        }
+        
+        if (msgArr.length && msgArr[1]) {
+            return (msgArr[0] == `<@${this.id}>`)
+        }
+
+        return false
     }
 }
 
