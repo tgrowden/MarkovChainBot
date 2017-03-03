@@ -20,6 +20,7 @@ class Bot {
      */
     constructor(config) {
         this.config = Object.assign({limit: 150}, config)
+        this._setCommands()
         if (!config.token) {
             throw new Error('The "Bot" class cannot be instantiated without a token')
         }
@@ -61,6 +62,99 @@ class Bot {
     }
 
     /**
+     * Set the _commands property, which maps a string to a method in the class
+     * 
+     * 
+     * @memberOf Bot
+     */
+    _setCommands() {
+        this._commands = {
+            purge: {
+                method: '_purge',
+                description: 'Purges all of a user\'s messages from the database'
+            },
+            help: {
+                method: '_help',
+                description: 'Displays the help message'
+            }
+        }
+    }
+
+    /**
+     * Executes a method based on the string passed
+     * 
+     * @param {String} methodName The name of the property in bot's _commands object
+     * @param {any} args The arguments passed to the given method
+     * 
+     * @memberOf Bot
+     */
+    _exec(methodName, msg, args) {
+        if (~args.indexOf('-h') || ~args.indexOf('--help')) {
+            let prop = msg.text.split(' ')[1]
+            let text = this._commands[prop].description
+            this.client.sendMessage(text, msg.channel)
+        } else {
+            this[methodName](msg, args)
+        }
+    }
+
+    /**
+     * Displays description text for all commands
+     * 
+     * @param {Object} msg The message object
+     * 
+     * @memberOf Bot
+     */
+    _help(msg) {
+        let text = ['Here is a list of the commands I know: \r']
+        for (let name of Object.keys(this._commands)) {
+            text.push(`*${name}*: ${this._commands[name].description}`)
+        }
+        this.client.sendMessage(text.join('\r'), msg.channel)
+    }
+
+    /**
+     * Purges chat history records for a given user
+     *
+     * @param {Object} msg The message object
+     * @param {Array} args The array of other arguments
+     * 
+     * @memberOf Bot
+     */
+    _purge(msg) {
+        this.collections.Message.remove({user: msg.user}).exec()
+            .then(() => {
+                this.client.sendMessage(`<@${msg.user}> Your messages have been purged!`, msg.channel)
+            })
+    }
+
+    /**
+     * Parses message text for a command
+     * 
+     * @param {Object} msg The message Object
+     * @returns {String|bool} The name of the method to execute, or false
+     * 
+     * @memberOf Bot
+     */
+    _parseCommand(msg) {
+        let msgArr = this._isCalled(msg)
+        if (msgArr && msgArr[0]) {
+            msgArr.shift()
+            let command = this._commands[msgArr[0]]
+            if (command) {
+                msgArr.shift()
+                return {
+                    method: command.method,
+                    description: command.description,
+                    args: msgArr
+                }
+            }
+        }
+
+        return false
+    }
+
+    /**
      * Sets up event bindings for the bot client
      * 
      * @memberOf Bot
@@ -74,8 +168,11 @@ class Bot {
         })
         this.client.on(this.events.rtm.MESSAGE, msg => {
             let queryParams = self.getMsgTag(msg)
+            let command = this._parseCommand(msg)
             if (queryParams) {
                 self.generate(queryParams)
+            } else if (command) {
+                this._exec(command.method, msg, command.args)
             } else if (queryParams === false && self.warrentsSave(msg)) {
                 self.saveMessage(msg)
             }
@@ -196,7 +293,7 @@ class Bot {
         let msgArray = msg.text.split(' ')
         let res = false
 
-        if (msgArray[0] == `<@${this.id}>` && msgArray[1]) {
+        if (this._isCalled(msg)) {
             if (msgArray[1] == 'me') {
                 res = {
                     user: msg.user,
@@ -218,6 +315,28 @@ class Bot {
         }
 
         return res
+    }
+
+    /**
+     * Checks a message to see if the bot is being explicitly called via a tag
+     * 
+     * @param {Object|Array} msg The message object, or an array of the message text
+     * @returns {Array|Boolean} The message array if the bot was called | false if it was not
+     * 
+     * @memberOf Bot
+     */
+    _isCalled(msg) {
+        let msgArr
+        if (msg instanceof Object) {
+            msgArr = msg.text.split(' ')
+        } else if (msg instanceof Array) {
+            msgArr = msg
+        }
+        if (msgArr.length && msgArr[1] && msgArr[0] == `<@${this.id}>`) {
+            return msgArr
+        }
+
+        return false
     }
 }
 
