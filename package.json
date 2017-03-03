@@ -1,6 +1,6 @@
 {
   "name": "markov-chain-bot",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A Slack bot that generates Markov chains based on a user's public post history.",
   "main": "index.js",
   "scripts": {
