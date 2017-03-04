@@ -5,6 +5,7 @@ const mongoose = require('mongoose')
 const RtmClient = require('@slack/client').RtmClient
 const RTM_EVENTS = require('@slack/client').RTM_EVENTS
 const CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS
+const defaultConfig = require('../config/default')
 
 /**
  * Markov Chain Slack Bot
@@ -19,7 +20,7 @@ class Bot {
      * @memberOf Bot
      */
     constructor(config) {
-        this.config = Object.assign({limit: 150}, config)
+        this.config = Object.assign(defaultConfig, config)
         this._setCommands()
         if (!config.token) {
             throw new Error('The "Bot" class cannot be instantiated without a token')
