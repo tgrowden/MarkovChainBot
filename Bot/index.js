@@ -5,6 +5,7 @@ const mongoose = require('mongoose')
 const RtmClient = require('@slack/client').RtmClient
 const RTM_EVENTS = require('@slack/client').RTM_EVENTS
 const CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS
+const defaultConfig = require('../config/default')
 
 /**
  * Markov Chain Slack Bot
@@ -19,7 +20,7 @@ class Bot {
      * @memberOf Bot
      */
     constructor(config) {
-        this.config = Object.assign({limit: 150}, config)
+        this.config = Object.assign(defaultConfig, config)
         this._setCommands()
         if (!config.token) {
             throw new Error('The "Bot" class cannot be instantiated without a token')
@@ -64,7 +65,6 @@ class Bot {
     /**
      * Set the _commands property, which maps a string to a method in the class
      * 
-     * 
      * @memberOf Bot
      */
     _setCommands() {
@@ -73,11 +73,61 @@ class Bot {
                 method: '_purge',
                 description: 'Purges all of a user\'s messages from the database'
             },
+            info: {
+                method: '_info',
+                description: 'Displays info about the repository'
+            },
             help: {
                 method: '_help',
                 description: 'Displays the help message'
+            },
+            shrug: {
+                method: '_sendText',
+                ee: true,
+                args: [
+                    '¯\\\_(ツ)\_/¯'
+                ]
+            },
+            cat: {
+                method: '_sendText',
+                ee: true,
+                description: 'I\'m a pretty kitty',
+                args: [
+                    '~(=^‥^)'
+                ]
             }
         }
+    }
+
+    /**
+     * Sends the message text passed in args[0]
+     * 
+     * @param {Object} msg The message object
+     * @param {Array} args The args passed to the method
+     * 
+     * @memberOf Bot
+     */
+    _sendText(msg, args) {
+        if (args.length) {
+            let text = args[0]
+            this.client.sendMessage(text, msg.channel)
+        }
+    }
+
+    /**
+     * Displays information about the repo
+     * 
+     * @param {Object} msg The message object
+     * 
+     * @memberOf Bot
+     */
+    _info(msg) {
+        let text = []
+        text.push(`\`Repo\`: ${this.config.package.repo}`)
+        text.push(`\`Current Version\`: ${this.config.package.version}`)
+        text.push(`\`Issues\`: ${this.config.package.bugs}`)
+        text.push(`\`Author\`: ${this.config.package.author}`)
+        this.client.sendMessage(text.join('\r'), msg.channel)
     }
 
     /**
@@ -91,7 +141,7 @@ class Bot {
     _exec(methodName, msg, args) {
         if (~args.indexOf('-h') || ~args.indexOf('--help')) {
             let prop = msg.text.split(' ')[1]
-            let text = this._commands[prop].description
+            let text = `\`${prop}\`: ${this._commands[prop].description || 'No description'}`
             this.client.sendMessage(text, msg.channel)
         } else {
             this[methodName](msg, args)
@@ -108,7 +158,9 @@ class Bot {
     _help(msg) {
         let text = ['Here is a list of the commands I know: \r']
         for (let name of Object.keys(this._commands)) {
-            text.push(`*${name}*: ${this._commands[name].description}`)
+            if (!this._commands[name].hasOwnProperty('ee') || this._commands[name].ee !== true) {
+                text.push(`\`${name}\`: ${this._commands[name].description}`)
+            }
         }
         this.client.sendMessage(text.join('\r'), msg.channel)
     }
@@ -143,10 +195,14 @@ class Bot {
             let command = this._commands[msgArr[0]]
             if (command) {
                 msgArr.shift()
+                let args = msgArr
+                if (command.hasOwnProperty('args')) {
+                    args = [...command.args, ...args]
+                }
                 return {
                     method: command.method,
                     description: command.description,
-                    args: msgArr
+                    args: args
                 }
             }
         }
@@ -173,15 +229,14 @@ class Bot {
                 self.generate(queryParams)
             } else if (command) {
                 this._exec(command.method, msg, command.args)
-            } else if (queryParams === false && self.warrentsSave(msg)) {
+            } else if (queryParams === false && self._warrantsSave(msg)) {
                 self.saveMessage(msg)
             }
         })
     }
 
-
     /**
-     * Determines if a message warrents saving
+     * Determines if a message warrants saving
      *
      * @todo look into message subtypes. as-is, this may not be sufficient
      * @param {Object} msg
@@ -189,7 +244,7 @@ class Bot {
      * 
      * @memberOf Bot
      */
-    warrentsSave(msg) {
+    _warrantsSave(msg) {
         let res = true
         if (msg.subtype && msg.subtype == 'file_share') {
             res = false
@@ -216,7 +271,7 @@ class Bot {
     }
 
     /**
-     * Generates a Markov chain and posts it in reponse of a message
+     * Generates a Markov chain and posts it in response of a message
      * 
      * @param {Object} params
      * 
@@ -257,7 +312,7 @@ class Bot {
     }
 
     /**
-     * Posts a Markov chain, refrencing a user, to a given channel
+     * Posts a Markov chain, referencing a user, to a given channel
      * 
      * @param {String} chain the Markov chain
      * @param {String} user the user's ID
@@ -290,8 +345,11 @@ class Bot {
      * @memberOf Bot
      */
     getMsgTag(msg) {
-        let msgArray = msg.text.split(' ')
         let res = false
+        if (!msg.text) {
+            return res
+        }
+        let msgArray = msg.text.split(' ')
 
         if (this._isCalled(msg)) {
             if (msgArray[1] == 'me') {
@@ -328,6 +386,9 @@ class Bot {
     _isCalled(msg) {
         let msgArr
         if (msg instanceof Object) {
+            if (!msg.text) {
+                return false
+            }
             msgArr = msg.text.split(' ')
         } else if (msg instanceof Array) {
             msgArr = msg
