@@ -108,7 +108,7 @@ class Bot {
     _help(msg) {
         let text = ['Here is a list of the commands I know: \r']
         for (let name of Object.keys(this._commands)) {
-            text.push(`*${name}*: ${this._commands[name].description}`)
+            text.push(`\`${name}\`: ${this._commands[name].description}`)
         }
         this.client.sendMessage(text.join('\r'), msg.channel)
     }
