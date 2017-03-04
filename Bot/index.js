@@ -81,7 +81,29 @@ class Bot {
             help: {
                 method: '_help',
                 description: 'Displays the help message'
+            },
+            shrug: {
+                method: '_sendText',
+                ee: true,
+                args: [
+                    '¯\\\_(ツ)\_/¯'
+                ]
+            },
+            cat: {
+                method: '_sendText',
+                ee: true,
+                description: 'I\'m a pretty kitty',
+                args: [
+                    '~(=^‥^)'
+                ]
             }
+        }
+    }
+
+    _sendText(msg, args) {
+        if (args.length) {
+            let text = args[0]
+            this.client.sendMessage(text, msg.channel)
         }
     }
 
@@ -100,7 +122,7 @@ class Bot {
     _exec(methodName, msg, args) {
         if (~args.indexOf('-h') || ~args.indexOf('--help')) {
             let prop = msg.text.split(' ')[1]
-            let text = this._commands[prop].description
+            let text = `\`${prop}\`: ${this._commands[prop].description || 'No description'}`
             this.client.sendMessage(text, msg.channel)
         } else {
             this[methodName](msg, args)
@@ -117,7 +139,9 @@ class Bot {
     _help(msg) {
         let text = ['Here is a list of the commands I know: \r']
         for (let name of Object.keys(this._commands)) {
-            text.push(`\`${name}\`: ${this._commands[name].description}`)
+            if (!this._commands[name].hasOwnProperty('ee') || this._commands[name].ee !== true) {
+                text.push(`\`${name}\`: ${this._commands[name].description}`)
+            }
         }
         this.client.sendMessage(text.join('\r'), msg.channel)
     }
@@ -152,10 +176,14 @@ class Bot {
             let command = this._commands[msgArr[0]]
             if (command) {
                 msgArr.shift()
+                let args = msgArr
+                if (command.hasOwnProperty('args')) {
+                    args = [...command.args, ...args]
+                }
                 return {
                     method: command.method,
                     description: command.description,
-                    args: msgArr
+                    args: args
                 }
             }
         }
@@ -299,8 +327,11 @@ class Bot {
      * @memberOf Bot
      */
     getMsgTag(msg) {
-        let msgArray = msg.text.split(' ')
         let res = false
+        if (!msg.text) {
+            return res
+        }
+        let msgArray = msg.text.split(' ')
 
         if (this._isCalled(msg)) {
             if (msgArray[1] == 'me') {
@@ -337,6 +368,9 @@ class Bot {
     _isCalled(msg) {
         let msgArr
         if (msg instanceof Object) {
+            if (!msg.text) {
+                return false
+            }
             msgArr = msg.text.split(' ')
         } else if (msg instanceof Array) {
             msgArr = msg
