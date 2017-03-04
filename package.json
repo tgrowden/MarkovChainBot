@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@slack/client": "^3.8.1",
+    "fs": "0.0.1-security",
     "markov-chain-generator": "^0.1.0",
     "mongoose": "^4.8.4"
   }
