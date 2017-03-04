@@ -74,11 +74,19 @@ class Bot {
                 method: '_purge',
                 description: 'Purges all of a user\'s messages from the database'
             },
+            repo: {
+                method: '_repo',
+                description: 'Displays the Github repository URL'
+            },
             help: {
                 method: '_help',
                 description: 'Displays the help message'
             }
         }
+    }
+
+    _repo(msg) {
+        this.client.sendMessage(this.config.repo, msg.channel)
     }
 
     /**
