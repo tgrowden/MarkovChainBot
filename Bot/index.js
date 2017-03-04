@@ -65,7 +65,6 @@ class Bot {
     /**
      * Set the _commands property, which maps a string to a method in the class
      * 
-     * 
      * @memberOf Bot
      */
     _setCommands() {
@@ -74,9 +73,9 @@ class Bot {
                 method: '_purge',
                 description: 'Purges all of a user\'s messages from the database'
             },
-            repo: {
-                method: '_repo',
-                description: 'Displays the Github repository URL'
+            info: {
+                method: '_info',
+                description: 'Displays info about the repository'
             },
             help: {
                 method: '_help',
@@ -100,6 +99,14 @@ class Bot {
         }
     }
 
+    /**
+     * Sends the message text passed in args[0]
+     * 
+     * @param {Object} msg The message object
+     * @param {Array} args The args passed to the method
+     * 
+     * @memberOf Bot
+     */
     _sendText(msg, args) {
         if (args.length) {
             let text = args[0]
@@ -107,8 +114,20 @@ class Bot {
         }
     }
 
-    _repo(msg) {
-        this.client.sendMessage(this.config.repo, msg.channel)
+    /**
+     * Displays information about the repo
+     * 
+     * @param {Object} msg The message object
+     * 
+     * @memberOf Bot
+     */
+    _info(msg) {
+        let text = []
+        text.push(`\`Repo\`: ${this.config.package.repo}`)
+        text.push(`\`Current Version\`: ${this.config.package.version}`)
+        text.push(`\`Issues\`: ${this.config.package.bugs}`)
+        text.push(`\`Author\`: ${this.config.package.author}`)
+        this.client.sendMessage(text.join('\r'), msg.channel)
     }
 
     /**
@@ -215,7 +234,6 @@ class Bot {
             }
         })
     }
-
 
     /**
      * Determines if a message warrants saving
