@@ -174,7 +174,7 @@ class Bot {
                 self.generate(queryParams)
             } else if (command) {
                 this._exec(command.method, msg, command.args)
-            } else if (queryParams === false && self.warrentsSave(msg)) {
+            } else if (queryParams === false && self._warrantsSave(msg)) {
                 self.saveMessage(msg)
             }
         })
@@ -182,7 +182,7 @@ class Bot {
 
 
     /**
-     * Determines if a message warrents saving
+     * Determines if a message warrants saving
      *
      * @todo look into message subtypes. as-is, this may not be sufficient
      * @param {Object} msg
@@ -190,7 +190,7 @@ class Bot {
      * 
      * @memberOf Bot
      */
-    warrentsSave(msg) {
+    _warrantsSave(msg) {
         let res = true
         if (msg.subtype && msg.subtype == 'file_share') {
             res = false
@@ -217,7 +217,7 @@ class Bot {
     }
 
     /**
-     * Generates a Markov chain and posts it in reponse of a message
+     * Generates a Markov chain and posts it in response of a message
      * 
      * @param {Object} params
      * 
@@ -258,7 +258,7 @@ class Bot {
     }
 
     /**
-     * Posts a Markov chain, refrencing a user, to a given channel
+     * Posts a Markov chain, referencing a user, to a given channel
      * 
      * @param {String} chain the Markov chain
      * @param {String} user the user's ID
